@@ -46,7 +46,7 @@ jobs:
           # Conservative anti-spam caps for public replies.
           MAX_REPLIES_PER_RUN: "1"
           MAX_REPLIES_PER_DAY: "2"
-          MIN_REPLY_SCORE: "20"
+          MIN_REPLY_SCORE: "18"
 
           MIN_SCORE: "8"
           MARGINBOOST_URL: "https://marginboost.co.za"

@@ -83,8 +83,9 @@ def run_bluesky_engagement(state: dict, marginboost_url: str) -> dict:
     if not enabled or not bluesky.configured():
         return report
 
-    candidates = search_candidates(own_handle=own_handle)
+    candidates, search_stats = search_candidates(own_handle=own_handle)
     report["candidates"] = len(candidates)
+    report["search_stats"] = search_stats
 
     qualified = [
         c for c in candidates
@@ -228,6 +229,7 @@ def main():
         "rss_qualified_new": len(fresh),
         "standalone_published": successful_posts,
         "bluesky_search_candidates": engagement["candidates"],
+        "bluesky_search_stats": engagement.get("search_stats", {}),
         "bluesky_high_intent_qualified": engagement["qualified"],
         "bluesky_public_replies": engagement["replied"],
         "auto_publish": auto_publish,

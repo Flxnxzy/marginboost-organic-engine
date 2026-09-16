@@ -12,18 +12,26 @@ from .util import fingerprint, normalize_space
 PDS = "https://bsky.social"
 APPVIEW_PROXY = "did:web:api.bsky.app#bsky_appview"
 
+# Broad queries first; qualification happens after retrieval.
 SEARCH_QUERIES = [
-    '"South Africa" BPO',
-    '"South Africa" outsourcing',
-    '"South Africa" Upwork',
-    '"South Africa" subcontracting',
-    '"South Africa" freelancer clients',
-    '"Johannesburg" outsourcing',
-    '"Johannesburg" Upwork',
-    '"Cape Town" outsourcing',
-    '"Cape Town" Upwork',
-    '"Durban" outsourcing',
-    '"Pretoria" outsourcing',
+    "South Africa outsourcing",
+    "South African outsourcing",
+    "South Africa BPO",
+    "South African BPO",
+    "South Africa Upwork",
+    "South African Upwork",
+    "South Africa freelancer",
+    "South African freelancer",
+    "South Africa agency clients",
+    "Johannesburg freelancer",
+    "Johannesburg outsourcing",
+    "Cape Town freelancer",
+    "Cape Town outsourcing",
+    "Durban freelancer",
+    "Pretoria freelancer",
+    "outsourcing clients South Africa",
+    "subcontractor South Africa",
+    "remote clients South Africa",
 ]
 
 ZA_TERMS = (
@@ -54,6 +62,7 @@ BPO_TERMS = (
     "fiverr",
     "freelanc",
     "agency",
+    "remote client",
 )
 
 OPERATOR_TERMS = (
@@ -75,6 +84,9 @@ OPERATOR_TERMS = (
     "scale",
     "scaling",
     "manage",
+    "management",
+    "workflow",
+    "spreadsheet",
 )
 
 HIGH_INTENT_TERMS = (
@@ -98,6 +110,7 @@ HIGH_INTENT_TERMS = (
     "profit",
     "outsourc",
     "subcontract",
+    "scale",
 )
 
 NEGATIVE_TERMS = (
@@ -148,7 +161,13 @@ def score_candidate(text: str) -> tuple[int, list[str]]:
     operator = _contains_any(t, OPERATOR_TERMS)
     intent = _contains_any(t, HIGH_INTENT_TERMS)
 
-    if not za or not bpo or not operator or not intent:
+    # Must be South African and clearly about outsourcing/freelance/BPO.
+    if not za or not bpo:
+        return 0, []
+
+    # We still need evidence that this is an operator or a pain/question,
+    # but we no longer require both because that was filtering everything out.
+    if not operator and not intent:
         return 0, []
 
     score = (
@@ -160,13 +179,13 @@ def score_candidate(text: str) -> tuple[int, list[str]]:
 
     if "?" in t:
         score += 3
-    if any(p in t for p in (" i ", " i'm ", " i've ", " my ", " we ", " we're ", " our ")):
+    if any(p in f" {t} " for p in (" i ", " i'm ", " i've ", " my ", " we ", " we're ", " our ")):
         score += 2
 
     return score, sorted(set(za + bpo + operator + intent))
 
 
-def _is_recent(created_at: str, hours: int = 72) -> bool:
+def _is_recent(created_at: str, hours: int = 168) -> bool:
     try:
         dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
         if dt.tzinfo is None:
@@ -192,15 +211,13 @@ def _session_token() -> str:
 
 
 def _search(query: str, token: str, limit: int) -> list[dict]:
-    # Bluesky's docs recommend routing authenticated app.bsky.* reads
-    # through the user's PDS, which proxies to the Bluesky AppView.
     response = requests.get(
         f"{PDS}/xrpc/app.bsky.feed.searchPosts",
         params={"q": query, "limit": limit, "sort": "latest"},
         headers={
             "Authorization": f"Bearer {token}",
             "atproto-proxy": APPVIEW_PROXY,
-            "User-Agent": "MarginBoostOrganicEngine/3.1 (+https://marginboost.co.za)",
+            "User-Agent": "MarginBoostOrganicEngine/3.2 (+https://marginboost.co.za)",
         },
         timeout=20,
     )
@@ -208,15 +225,25 @@ def _search(query: str, token: str, limit: int) -> list[dict]:
     return response.json().get("posts", [])
 
 
-def search_candidates(own_handle: str = "", limit_per_query: int = 25) -> list[BlueskyCandidate]:
+def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[list[BlueskyCandidate], dict]:
     token = _session_token()
     seen = set()
     out: list[BlueskyCandidate] = []
+    stats = {
+        "queries": len(SEARCH_QUERIES),
+        "raw_results": 0,
+        "unique_results": 0,
+        "recent_results": 0,
+        "qualified_candidates": 0,
+        "query_errors": 0,
+    }
 
     for query in SEARCH_QUERIES:
         try:
             posts = _search(query, token, limit_per_query)
+            stats["raw_results"] += len(posts)
         except Exception as exc:
+            stats["query_errors"] += 1
             print(f"[warn] authenticated Bluesky search failed for {query!r}: {exc}")
             continue
 
@@ -232,13 +259,15 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 25) -> list[B
             if not uri or not cid or not text or uri in seen:
                 continue
             seen.add(uri)
+            stats["unique_results"] += 1
 
             handle = (author.get("handle") or "").lower()
             if own_handle and handle == own_handle.lower():
                 continue
-            if not _is_recent(created_at, 72):
+            if not _is_recent(created_at, 168):
                 continue
 
+            stats["recent_results"] += 1
             score, matches = score_candidate(text)
             if score <= 0:
                 continue
@@ -265,4 +294,5 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 25) -> list[B
             ))
 
     out.sort(key=lambda x: x.score, reverse=True)
-    return out
+    stats["qualified_candidates"] = len(out)
+    return out, stats
