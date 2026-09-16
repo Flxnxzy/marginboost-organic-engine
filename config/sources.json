@@ -1,0 +1,24 @@
+{
+  "feeds": [
+    {
+      "name": "Google News ZA BPO outsourcing",
+      "url": "https://news.google.com/rss/search?q=%22South+Africa%22+(BPO+OR+outsourcing+OR+freelance+OR+Upwork)&hl=en-ZA&gl=ZA&ceid=ZA:en"
+    },
+    {
+      "name": "Google News ZA freelance outsourcing",
+      "url": "https://news.google.com/rss/search?q=(Johannesburg+OR+Cape+Town+OR+Durban+OR+Pretoria)+(freelance+OR+outsourcing+OR+agency)&hl=en-ZA&gl=ZA&ceid=ZA:en"
+    },
+    {
+      "name": "Reddit South Africa freelance search",
+      "url": "https://www.reddit.com/r/southafrica/search.rss?q=freelance%20OR%20outsourcing%20OR%20BPO%20OR%20Upwork&restrict_sr=on&sort=new"
+    },
+    {
+      "name": "Reddit Johannesburg freelance search",
+      "url": "https://www.reddit.com/r/johannesburg/search.rss?q=freelance%20OR%20outsourcing%20OR%20Upwork&restrict_sr=on&sort=new"
+    },
+    {
+      "name": "Reddit Cape Town freelance search",
+      "url": "https://www.reddit.com/r/capetown/search.rss?q=freelance%20OR%20outsourcing%20OR%20Upwork&restrict_sr=on&sort=new"
+    }
+  ]
+}

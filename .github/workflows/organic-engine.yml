@@ -1,0 +1,60 @@
+name: MarginBoost Organic Engine
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: marginboost-organic-engine
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+        continue-on-error: true
+
+      - name: Run organic engine
+        env:
+          AUTO_PUBLISH: "true"
+          MAX_POSTS_PER_RUN: "1"
+          MAX_POSTS_PER_DAY: "3"
+          MIN_SCORE: "8"
+          MARGINBOOST_URL: "https://marginboost.co.za"
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+          MASTODON_BASE_URL: ${{ secrets.MASTODON_BASE_URL }}
+          MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+        run: python -m src.main
+
+      - name: Persist state and latest queue
+        run: |
+          if git diff --quiet -- data/state.json data/latest.json; then
+            echo "No state changes."
+            exit 0
+          fi
+          git config user.name "marginboost-organic-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/state.json data/latest.json
+          git commit -m "chore: persist organic engine state"
+          git push
