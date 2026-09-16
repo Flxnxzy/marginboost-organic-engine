@@ -45,14 +45,14 @@ def _link_facets(text: str) -> list[dict]:
     return facets
 
 
-def _create_record(record: dict) -> dict:
+def _create_record(record: dict, collection: str = "app.bsky.feed.post") -> dict:
     token, did = _session()
     response = requests.post(
         f"{BASE}/com.atproto.repo.createRecord",
         headers={"Authorization": f"Bearer {token}"},
         json={
             "repo": did,
-            "collection": "app.bsky.feed.post",
+            "collection": collection,
             "record": record,
         },
         timeout=20,
@@ -100,6 +100,24 @@ def publish_reply(
         record["facets"] = facets
 
     return _create_record(record)
+
+def like_post(subject_uri: str, subject_cid: str) -> dict:
+    record = {
+        "$type": "app.bsky.feed.like",
+        "subject": {"uri": subject_uri, "cid": subject_cid},
+        "createdAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    return _create_record(record, "app.bsky.feed.like")
+
+
+def follow_author(subject_did: str) -> dict:
+    record = {
+        "$type": "app.bsky.graph.follow",
+        "subject": subject_did,
+        "createdAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    return _create_record(record, "app.bsky.graph.follow")
+
 
 def delete_post(uri: str) -> dict:
     token, did = _session()

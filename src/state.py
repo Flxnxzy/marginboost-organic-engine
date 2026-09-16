@@ -8,7 +8,7 @@ from pathlib import Path
 def load_state(path: str = "data/state.json") -> dict:
     p = Path(path)
     if not p.exists():
-        return {"seen": {}, "published": [], "engaged": [], "last_run": None}
+        return {"seen": {}, "published": [], "engaged": [], "liked": [], "followed": [], "deleted_replies": [], "last_run": None}
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except Exception:
@@ -16,6 +16,9 @@ def load_state(path: str = "data/state.json") -> dict:
     data.setdefault("seen", {})
     data.setdefault("published", [])
     data.setdefault("engaged", [])
+    data.setdefault("liked", [])
+    data.setdefault("followed", [])
+    data.setdefault("deleted_replies", [])
     data.setdefault("last_run", None)
     return data
 
@@ -47,10 +50,11 @@ def prune_state(state: dict, seen_days: int = 45, published_days: int = 90, enga
         row for row in state.get("published", [])
         if _row_after(row, pub_cutoff)
     ]
-    state["engaged"] = [
-        row for row in state.get("engaged", [])
-        if _row_after(row, engaged_cutoff)
-    ]
+    for key in ("engaged", "liked", "followed"):
+        state[key] = [
+            row for row in state.get(key, [])
+            if _row_after(row, engaged_cutoff)
+        ]
 
 
 def _row_after(row: dict, cutoff: datetime) -> bool:
@@ -82,6 +86,52 @@ def engaged_today(state: dict) -> int:
         except Exception:
             pass
     return count
+
+
+def likes_today(state: dict) -> int:
+    today = datetime.now(timezone.utc).date()
+    count = 0
+    for row in state.get("liked", []):
+        try:
+            if _parse(row["at"]).date() == today:
+                count += 1
+        except Exception:
+            pass
+    return count
+
+
+def follows_today(state: dict) -> int:
+    today = datetime.now(timezone.utc).date()
+    count = 0
+    for row in state.get("followed", []):
+        try:
+            if _parse(row["at"]).date() == today:
+                count += 1
+        except Exception:
+            pass
+    return count
+
+
+def already_liked(state: dict, candidate_id: str) -> bool:
+    return any(row.get("candidate_id") == candidate_id for row in state.get("liked", []))
+
+
+def already_followed_author(state: dict, author_did: str) -> bool:
+    return any(row.get("author_did") == author_did for row in state.get("followed", []))
+
+
+def author_touched_recently(state: dict, author_did: str, days: int = 7) -> bool:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    for key in ("engaged", "liked", "followed"):
+        for row in state.get(key, []):
+            if row.get("author_did") != author_did:
+                continue
+            try:
+                if _parse(row["at"]) >= cutoff:
+                    return True
+            except Exception:
+                pass
+    return False
 
 
 def already_engaged(state: dict, candidate_id: str) -> bool:

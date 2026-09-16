@@ -37,6 +37,8 @@ jobs:
         env:
           AUTO_PUBLISH: "true"
           ENABLE_PUBLIC_REPLIES: "true"
+          ENABLE_LIKES: "true"
+          ENABLE_FOLLOWS: "true"
 
           # One false-positive reply from V3.2 was to a construction/engineering
           # company. Delete it once, then state prevents repeat attempts.
@@ -44,13 +46,23 @@ jobs:
 
           # V3 prioritises direct, relevant public conversations over
           # standalone posts to an empty follower graph.
-          MAX_POSTS_PER_RUN: "0"
+          MAX_POSTS_PER_RUN: "1"
           MAX_POSTS_PER_DAY: "1"
 
           # Conservative anti-spam caps for public replies.
           MAX_REPLIES_PER_RUN: "1"
-          MAX_REPLIES_PER_DAY: "2"
+          MAX_REPLIES_PER_DAY: "5"
           MIN_REPLY_SCORE: "18"
+
+          MAX_LIKES_PER_RUN: "5"
+          MAX_LIKES_PER_DAY: "25"
+          MIN_LIKE_SCORE: "12"
+
+          MAX_FOLLOWS_PER_RUN: "1"
+          MAX_FOLLOWS_PER_DAY: "3"
+          MIN_FOLLOW_SCORE: "14"
+
+          AUTHOR_COOLDOWN_DAYS: "7"
 
           MIN_SCORE: "8"
           MARGINBOOST_URL: "https://marginboost.co.za"

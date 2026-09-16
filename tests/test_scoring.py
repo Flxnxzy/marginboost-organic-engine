@@ -1,6 +1,6 @@
 from src.scoring import score_item
 from src.content import build_post
-from src.bluesky_discovery import score_candidate
+from src.bluesky_discovery import score_candidate, score_relevance
 from src.engagement import build_reply
 
 
@@ -98,3 +98,21 @@ def test_real_sa_outsourcing_operator_is_kept():
         "and need help tracking margin and managing the workflow. What tool do you use?"
     )
     assert score >= 18
+
+def test_relevance_can_like_without_sales_reply():
+    text = (
+        "South African Upwork freelancer sharing how I organise client delivery "
+        "and my freelance agency workflow."
+    )
+    relevance, matches = score_relevance(text)
+    reply_score, _ = score_candidate(text)
+    assert relevance >= 12
+    assert "upwork" in matches
+    assert reply_score == 0
+
+
+def test_construction_is_not_even_like_relevant():
+    relevance, _ = score_relevance(
+        "South Africa construction engineering project sites and subcontractor management"
+    )
+    assert relevance == 0

@@ -16,8 +16,12 @@ from .state import (
     prune_state,
     published_today,
     engaged_today,
+    likes_today,
+    follows_today,
     already_engaged,
-    author_engaged_recently,
+    already_liked,
+    already_followed_author,
+    author_touched_recently,
 )
 from .publishers import bluesky, mastodon
 
@@ -89,52 +93,73 @@ def cleanup_revoked_replies(state: dict) -> dict:
     return report
 
 def run_bluesky_engagement(state: dict, marginboost_url: str) -> dict:
-    enabled = env_bool("ENABLE_PUBLIC_REPLIES", True)
-    max_per_run = max(0, int(os.getenv("MAX_REPLIES_PER_RUN", "1")))
-    max_per_day = max(0, int(os.getenv("MAX_REPLIES_PER_DAY", "2")))
-    min_score = max(1, int(os.getenv("MIN_REPLY_SCORE", "20")))
+    replies_enabled = env_bool("ENABLE_PUBLIC_REPLIES", True)
+    likes_enabled = env_bool("ENABLE_LIKES", True)
+    follows_enabled = env_bool("ENABLE_FOLLOWS", True)
+
+    max_replies_run = max(0, int(os.getenv("MAX_REPLIES_PER_RUN", "1")))
+    max_replies_day = max(0, int(os.getenv("MAX_REPLIES_PER_DAY", "5")))
+    min_reply_score = max(1, int(os.getenv("MIN_REPLY_SCORE", "18")))
+
+    max_likes_run = max(0, int(os.getenv("MAX_LIKES_PER_RUN", "5")))
+    max_likes_day = max(0, int(os.getenv("MAX_LIKES_PER_DAY", "25")))
+    min_like_score = max(1, int(os.getenv("MIN_LIKE_SCORE", "12")))
+
+    max_follows_run = max(0, int(os.getenv("MAX_FOLLOWS_PER_RUN", "1")))
+    max_follows_day = max(0, int(os.getenv("MAX_FOLLOWS_PER_DAY", "3")))
+    min_follow_score = max(1, int(os.getenv("MIN_FOLLOW_SCORE", "14")))
+
+    cooldown_days = max(1, int(os.getenv("AUTHOR_COOLDOWN_DAYS", "7")))
     own_handle = os.getenv("BLUESKY_HANDLE", "")
 
     report = {
-        "enabled": enabled,
+        "enabled": {"replies": replies_enabled, "likes": likes_enabled, "follows": follows_enabled},
         "candidates": 0,
-        "qualified": 0,
+        "reply_qualified": 0,
+        "like_qualified": 0,
+        "follow_qualified": 0,
         "replied": 0,
-        "records": [],
+        "liked": 0,
+        "followed": 0,
+        "reply_records": [],
+        "like_records": [],
+        "follow_records": [],
     }
 
-    if not enabled or not bluesky.configured():
+    if not bluesky.configured() or not (replies_enabled or likes_enabled or follows_enabled):
         return report
 
     candidates, search_stats = search_candidates(own_handle=own_handle)
     report["candidates"] = len(candidates)
     report["search_stats"] = search_stats
+    touched_this_run = set()
 
-    qualified = [
+    reply_qualified = [
         c for c in candidates
-        if c.score >= min_score
+        if c.score >= min_reply_score
         and not already_engaged(state, c.id)
-        and not author_engaged_recently(state, c.author_did, days=14)
+        and not author_touched_recently(state, c.author_did, days=cooldown_days)
     ]
-    report["qualified"] = len(qualified)
+    report["reply_qualified"] = len(reply_qualified)
+    reply_limit = min(
+        max_replies_run,
+        max(0, max_replies_day - engaged_today(state)),
+    ) if replies_enabled else 0
 
-    remaining_today = max(0, max_per_day - engaged_today(state))
-    run_limit = min(max_per_run, remaining_today)
-
-    for candidate in qualified[:run_limit]:
+    for candidate in reply_qualified[:reply_limit]:
         reply_text = build_reply(candidate.to_dict(), marginboost_url)
-        record = {
+        rec = {
             "candidate_id": candidate.id,
             "author": candidate.author_handle,
             "author_did": candidate.author_did,
             "source_uri": candidate.uri,
             "score": candidate.score,
+            "relevance_score": candidate.relevance_score,
             "matches": candidate.matches,
             "source_text": candidate.text[:500],
             "reply_text": reply_text,
             "ok": False,
         }
-
         try:
             result = bluesky.publish_reply(
                 reply_text,
@@ -143,9 +168,10 @@ def run_bluesky_engagement(state: dict, marginboost_url: str) -> dict:
                 root_uri=candidate.root_uri,
                 root_cid=candidate.root_cid,
             )
-            record["ok"] = True
-            record["result"] = result
+            rec["ok"] = True
+            rec["result"] = result
             report["replied"] += 1
+            touched_this_run.add(candidate.author_did)
             state["engaged"].append({
                 "candidate_id": candidate.id,
                 "author_did": candidate.author_did,
@@ -154,18 +180,112 @@ def run_bluesky_engagement(state: dict, marginboost_url: str) -> dict:
                 "reply_uri": result.get("uri"),
                 "at": utc_now(),
                 "score": candidate.score,
+                "relevance_score": candidate.relevance_score,
             })
         except Exception as exc:
-            record["error"] = str(exc)
+            rec["error"] = str(exc)
+        report["reply_records"].append(rec)
 
-        report["records"].append(record)
+    follow_candidates = [
+        c for c in candidates
+        if c.relevance_score >= min_follow_score
+        and c.author_did
+        and c.author_did not in touched_this_run
+        and not already_followed_author(state, c.author_did)
+        and not author_touched_recently(state, c.author_did, days=cooldown_days)
+    ]
+    unique_follows = []
+    seen_authors = set()
+    for c in follow_candidates:
+        if c.author_did in seen_authors:
+            continue
+        seen_authors.add(c.author_did)
+        unique_follows.append(c)
+
+    report["follow_qualified"] = len(unique_follows)
+    follow_limit = min(
+        max_follows_run,
+        max(0, max_follows_day - follows_today(state)),
+    ) if follows_enabled else 0
+
+    for candidate in unique_follows[:follow_limit]:
+        rec = {
+            "candidate_id": candidate.id,
+            "author": candidate.author_handle,
+            "author_did": candidate.author_did,
+            "source_uri": candidate.uri,
+            "relevance_score": candidate.relevance_score,
+            "matches": candidate.matches,
+            "ok": False,
+        }
+        try:
+            result = bluesky.follow_author(candidate.author_did)
+            rec["ok"] = True
+            rec["result"] = result
+            report["followed"] += 1
+            touched_this_run.add(candidate.author_did)
+            state["followed"].append({
+                "candidate_id": candidate.id,
+                "author_did": candidate.author_did,
+                "author_handle": candidate.author_handle,
+                "source_uri": candidate.uri,
+                "follow_uri": result.get("uri"),
+                "at": utc_now(),
+                "relevance_score": candidate.relevance_score,
+            })
+        except Exception as exc:
+            rec["error"] = str(exc)
+        report["follow_records"].append(rec)
+
+    like_candidates = [
+        c for c in candidates
+        if c.relevance_score >= min_like_score
+        and c.author_did
+        and c.author_did not in touched_this_run
+        and not already_liked(state, c.id)
+        and not author_touched_recently(state, c.author_did, days=cooldown_days)
+    ]
+    report["like_qualified"] = len(like_candidates)
+    like_limit = min(
+        max_likes_run,
+        max(0, max_likes_day - likes_today(state)),
+    ) if likes_enabled else 0
+
+    for candidate in like_candidates[:like_limit]:
+        rec = {
+            "candidate_id": candidate.id,
+            "author": candidate.author_handle,
+            "author_did": candidate.author_did,
+            "source_uri": candidate.uri,
+            "relevance_score": candidate.relevance_score,
+            "matches": candidate.matches,
+            "ok": False,
+        }
+        try:
+            result = bluesky.like_post(candidate.uri, candidate.cid)
+            rec["ok"] = True
+            rec["result"] = result
+            report["liked"] += 1
+            touched_this_run.add(candidate.author_did)
+            state["liked"].append({
+                "candidate_id": candidate.id,
+                "author_did": candidate.author_did,
+                "author_handle": candidate.author_handle,
+                "source_uri": candidate.uri,
+                "like_uri": result.get("uri"),
+                "at": utc_now(),
+                "relevance_score": candidate.relevance_score,
+            })
+        except Exception as exc:
+            rec["error"] = str(exc)
+        report["like_records"].append(rec)
 
     return report
 
 
 def main():
     min_score = int(os.getenv("MIN_SCORE", "8"))
-    max_per_run = max(0, int(os.getenv("MAX_POSTS_PER_RUN", "0")))
+    max_per_run = max(0, int(os.getenv("MAX_POSTS_PER_RUN", "1")))
     max_per_day = max(0, int(os.getenv("MAX_POSTS_PER_DAY", "1")))
     auto_publish = env_bool("AUTO_PUBLISH", True)
     marginboost_url = os.getenv("MARGINBOOST_URL", "https://marginboost.co.za").strip()
@@ -257,10 +377,13 @@ def main():
         "standalone_published": successful_posts,
         "bluesky_search_candidates": engagement["candidates"],
         "bluesky_search_stats": engagement.get("search_stats", {}),
-        "bluesky_high_intent_qualified": engagement["qualified"],
+        "bluesky_reply_qualified": engagement["reply_qualified"],
         "bluesky_public_replies": engagement["replied"],
+        "bluesky_like_qualified": engagement["like_qualified"],
+        "bluesky_likes": engagement["liked"],
+        "bluesky_follow_qualified": engagement["follow_qualified"],
+        "bluesky_follows": engagement["followed"],
         "auto_publish": auto_publish,
-        "public_replies_enabled": engagement["enabled"],
         "bluesky_configured": bluesky.configured(),
     }, indent=2))
 

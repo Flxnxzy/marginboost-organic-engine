@@ -161,6 +161,7 @@ class BlueskyCandidate:
     root_uri: str
     root_cid: str
     score: int
+    relevance_score: int
     matches: list[str]
 
     def to_dict(self) -> dict:
@@ -169,6 +170,29 @@ class BlueskyCandidate:
 
 def _contains_any(text: str, terms) -> list[str]:
     return [term for term in terms if term in text]
+
+
+def score_relevance(text: str) -> tuple[int, list[str]]:
+    t = normalize_space(text).lower()
+
+    if any(term in t for term in NEGATIVE_TERMS):
+        return 0, []
+    if any(term in t for term in SECTOR_EXCLUSIONS):
+        return 0, []
+
+    za = _contains_any(t, ZA_TERMS)
+    bpo = _contains_any(t, STRONG_BPO_TERMS)
+    operator = _contains_any(t, OPERATOR_TERMS)
+
+    if not za or not bpo:
+        return 0, []
+
+    score = (
+        min(len(za), 2) * 5
+        + min(len(bpo), 3) * 5
+        + min(len(operator), 4) * 2
+    )
+    return score, sorted(set(za + bpo + operator))
 
 
 def score_candidate(text: str) -> tuple[int, list[str]]:
@@ -240,7 +264,7 @@ def _search(query: str, token: str, limit: int) -> list[dict]:
         headers={
             "Authorization": f"Bearer {token}",
             "atproto-proxy": APPVIEW_PROXY,
-            "User-Agent": "MarginBoostOrganicEngine/3.3 (+https://marginboost.co.za)",
+            "User-Agent": "MarginBoostOrganicEngine/4.0 (+https://marginboost.co.za)",
         },
         timeout=20,
     )
@@ -257,7 +281,8 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[
         "raw_results": 0,
         "unique_results": 0,
         "recent_results": 0,
-        "qualified_candidates": 0,
+        "relevant_candidates": 0,
+        "high_intent_candidates": 0,
         "query_errors": 0,
     }
 
@@ -293,9 +318,11 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[
 
             stats["recent_results"] += 1
 
-            score, matches = score_candidate(text)
-            if score <= 0:
+            relevance_score, relevance_matches = score_relevance(text)
+            if relevance_score <= 0:
                 continue
+
+            score, reply_matches = score_candidate(text)
 
             reply = record.get("reply") or {}
             root = reply.get("root") or {}
@@ -313,9 +340,11 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[
                 root_uri=root.get("uri") or uri,
                 root_cid=root.get("cid") or cid,
                 score=score,
-                matches=matches,
+                relevance_score=relevance_score,
+                matches=sorted(set(relevance_matches + reply_matches)),
             ))
 
-    out.sort(key=lambda x: x.score, reverse=True)
-    stats["qualified_candidates"] = len(out)
+    out.sort(key=lambda x: (x.score, x.relevance_score), reverse=True)
+    stats["relevant_candidates"] = len(out)
+    stats["high_intent_candidates"] = sum(1 for x in out if x.score > 0)
     return out, stats
