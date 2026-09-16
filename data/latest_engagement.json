@@ -6,36 +6,13 @@
   },
   "candidates": 1,
   "reply_qualified": 0,
-  "like_qualified": 1,
+  "like_qualified": 0,
   "follow_qualified": 0,
   "replied": 0,
-  "liked": 1,
+  "liked": 0,
   "followed": 0,
   "reply_records": [],
-  "like_records": [
-    {
-      "candidate_id": "e2afb518b87c85ce38256e3e",
-      "author": "pressportal.co.za",
-      "author_did": "did:plc:vz35eklbsdwmln3myunfrmzm",
-      "source_uri": "at://did:plc:vz35eklbsdwmln3myunfrmzm/app.bsky.feed.post/3mva32smqrz5y",
-      "relevance_score": 12,
-      "matches": [
-        "bpo",
-        "customer",
-        "south africa"
-      ],
-      "ok": true,
-      "result": {
-        "uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.like/3mvnw5goj3x24",
-        "cid": "bafyreidow2cxyrntihvfv2ej3b5nkbeanqeymdlyy3b5hek7tppvvp6bta",
-        "commit": {
-          "cid": "bafyreihev7fxifbyfqsbj3rcxocfmezasvh67o24cqdde5eu4inaczgiwe",
-          "rev": "3mvnw5gony724"
-        },
-        "validationStatus": "valid"
-      }
-    }
-  ],
+  "like_records": [],
   "follow_records": [],
   "search_stats": {
     "queries": 18,
