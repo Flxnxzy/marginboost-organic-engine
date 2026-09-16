@@ -32,29 +32,40 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
-        continue-on-error: true
 
-      - name: Run organic engine
+      - name: Run organic acquisition engine
         env:
           AUTO_PUBLISH: "true"
-          MAX_POSTS_PER_RUN: "1"
-          MAX_POSTS_PER_DAY: "3"
+          ENABLE_PUBLIC_REPLIES: "true"
+
+          # V3 prioritises direct, relevant public conversations over
+          # standalone posts to an empty follower graph.
+          MAX_POSTS_PER_RUN: "0"
+          MAX_POSTS_PER_DAY: "1"
+
+          # Conservative anti-spam caps for public replies.
+          MAX_REPLIES_PER_RUN: "1"
+          MAX_REPLIES_PER_DAY: "2"
+          MIN_REPLY_SCORE: "20"
+
           MIN_SCORE: "8"
           MARGINBOOST_URL: "https://marginboost.co.za"
+
           BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+
           MASTODON_BASE_URL: ${{ secrets.MASTODON_BASE_URL }}
           MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
         run: python -m src.main
 
-      - name: Persist state and latest queue
+      - name: Persist acquisition state
         run: |
-          if git diff --quiet -- data/state.json data/latest.json; then
+          if git diff --quiet -- data/state.json data/latest.json data/latest_engagement.json; then
             echo "No state changes."
             exit 0
           fi
           git config user.name "marginboost-organic-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/state.json data/latest.json
-          git commit -m "chore: persist organic engine state"
+          git add data/state.json data/latest.json data/latest_engagement.json
+          git commit -m "chore: persist organic acquisition state"
           git push

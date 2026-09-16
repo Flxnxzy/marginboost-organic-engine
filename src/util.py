@@ -14,12 +14,20 @@ def fingerprint(*parts: str) -> str:
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:24]
 
 
-def tracked_url(base_url: str, source: str, campaign: str = "organic-engine") -> str:
+def tracked_url(
+    base_url: str,
+    source: str,
+    campaign: str = "organic-engine",
+    medium: str = "organic",
+    content: str | None = None,
+) -> str:
     parsed = urlparse(base_url)
     q = dict(parse_qsl(parsed.query, keep_blank_values=True))
     q.update({
         "utm_source": source,
-        "utm_medium": "organic",
+        "utm_medium": medium,
         "utm_campaign": campaign,
     })
+    if content:
+        q["utm_content"] = content
     return urlunparse(parsed._replace(query=urlencode(q)))
