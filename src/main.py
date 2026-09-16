@@ -24,6 +24,9 @@ from .state import (
     author_touched_recently,
 )
 from .publishers import bluesky, mastodon
+from .reddit_client import RedditClient
+from .reddit_discovery import discover as discover_reddit
+from .reddit_engagement import allowed_subreddits, subreddit_allows_promo, build_comment
 
 
 def env_bool(name: str, default: bool = False) -> bool:
@@ -283,6 +286,133 @@ def run_bluesky_engagement(state: dict, marginboost_url: str) -> dict:
     return report
 
 
+
+def run_reddit_acquisition(state: dict, marginboost_url: str) -> dict:
+    client = RedditClient()
+    auto_comment = env_bool("REDDIT_AUTO_COMMENT", False)
+    max_per_run = max(0, int(os.getenv("MAX_REDDIT_COMMENTS_PER_RUN", "1")))
+    max_per_day = max(0, int(os.getenv("MAX_REDDIT_COMMENTS_PER_DAY", "3")))
+    min_score = max(1, int(os.getenv("MIN_REDDIT_REPLY_SCORE", "18")))
+    allowlist = allowed_subreddits()
+
+    state.setdefault("reddit_engaged", [])
+
+    report = {
+        "configured": client.configured(),
+        "auto_comment": auto_comment,
+        "allowlist": sorted(allowlist),
+        "candidates": 0,
+        "qualified": 0,
+        "commented": 0,
+        "records": [],
+        "search_stats": {},
+    }
+
+    if not client.configured():
+        return report
+
+    candidates, stats = discover_reddit(client)
+    report["candidates"] = len(candidates)
+    report["search_stats"] = stats
+
+    today = datetime.now(timezone.utc).date()
+    comments_today = 0
+    prior_ids = set()
+    prior_authors = set()
+
+    for row in state["reddit_engaged"]:
+        prior_ids.add(row.get("candidate_id"))
+        prior_authors.add(row.get("author"))
+        try:
+            if datetime.fromisoformat(row["at"].replace("Z", "+00:00")).date() == today:
+                comments_today += 1
+        except Exception:
+            pass
+
+    qualified = [
+        c for c in candidates
+        if c.score >= min_score
+        and c.id not in prior_ids
+        and c.author not in prior_authors
+    ]
+    report["qualified"] = len(qualified)
+
+    if not auto_comment:
+        report["records"] = [
+            {
+                "candidate_id": c.id,
+                "subreddit": c.subreddit,
+                "author": c.author,
+                "permalink": c.permalink,
+                "score": c.score,
+                "relevance_score": c.relevance_score,
+                "title": c.title,
+                "body": c.body[:500],
+                "action": "discovered_only",
+            }
+            for c in qualified[:10]
+        ]
+        return report
+
+    remaining = max(0, max_per_day - comments_today)
+    run_limit = min(max_per_run, remaining)
+    rule_cache = {}
+
+    for candidate in qualified:
+        if report["commented"] >= run_limit:
+            break
+
+        subreddit = candidate.subreddit.lower()
+        record = {
+            "candidate_id": candidate.id,
+            "subreddit": subreddit,
+            "author": candidate.author,
+            "permalink": candidate.permalink,
+            "score": candidate.score,
+            "relevance_score": candidate.relevance_score,
+            "title": candidate.title,
+            "body": candidate.body[:500],
+            "ok": False,
+        }
+
+        if subreddit not in allowlist:
+            record["skip"] = "subreddit_not_in_comment_allowlist"
+            report["records"].append(record)
+            continue
+
+        try:
+            if subreddit not in rule_cache:
+                rule_cache[subreddit] = client.subreddit_rules(subreddit)
+
+            if not subreddit_allows_promo(rule_cache[subreddit]):
+                record["skip"] = "subreddit_rules_block_promotion"
+                report["records"].append(record)
+                continue
+
+            text = build_comment(candidate.to_dict(), marginboost_url)
+            result = client.comment(candidate.fullname, text)
+
+            record["ok"] = True
+            record["comment_text"] = text
+            record["result"] = result
+            report["commented"] += 1
+
+            state["reddit_engaged"].append({
+                "candidate_id": candidate.id,
+                "author": candidate.author,
+                "subreddit": subreddit,
+                "source_fullname": candidate.fullname,
+                "permalink": candidate.permalink,
+                "at": utc_now(),
+                "score": candidate.score,
+            })
+        except Exception as exc:
+            record["error"] = str(exc)
+
+        report["records"].append(record)
+
+    return report
+
 def main():
     min_score = int(os.getenv("MIN_SCORE", "8"))
     max_per_run = max(0, int(os.getenv("MAX_POSTS_PER_RUN", "1")))
@@ -299,6 +429,7 @@ def main():
     # Primary acquisition layer: find live high-intent Bluesky conversations
     # and reply publicly where MarginBoost is actually relevant.
     engagement = run_bluesky_engagement(state, marginboost_url)
+    reddit = run_reddit_acquisition(state, marginboost_url)
 
     # Secondary research layer: RSS/news/Reddit feeds still discover market
     # language and topics. Standalone posting is disabled by default in V3.
@@ -368,6 +499,10 @@ def main():
         json.dumps(engagement, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+    Path("data/latest_reddit.json").write_text(
+        json.dumps(reddit, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
     print(json.dumps({
         "cleanup": cleanup,
@@ -385,6 +520,10 @@ def main():
         "bluesky_follows": engagement["followed"],
         "auto_publish": auto_publish,
         "bluesky_configured": bluesky.configured(),
+        "reddit_configured": reddit["configured"],
+        "reddit_candidates": reddit["candidates"],
+        "reddit_qualified": reddit["qualified"],
+        "reddit_comments": reddit["commented"],
     }, indent=2))
 
 

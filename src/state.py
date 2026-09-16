@@ -18,6 +18,7 @@ def load_state(path: str = "data/state.json") -> dict:
     data.setdefault("engaged", [])
     data.setdefault("liked", [])
     data.setdefault("followed", [])
+    data.setdefault("reddit_engaged", [])
     data.setdefault("deleted_replies", [])
     data.setdefault("last_run", None)
     return data
@@ -50,7 +51,7 @@ def prune_state(state: dict, seen_days: int = 45, published_days: int = 90, enga
         row for row in state.get("published", [])
         if _row_after(row, pub_cutoff)
     ]
-    for key in ("engaged", "liked", "followed"):
+    for key in ("engaged", "liked", "followed", "reddit_engaged"):
         state[key] = [
             row for row in state.get(key, [])
             if _row_after(row, engaged_cutoff)
@@ -122,7 +123,7 @@ def already_followed_author(state: dict, author_did: str) -> bool:
 
 def author_touched_recently(state: dict, author_did: str, days: int = 7) -> bool:
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    for key in ("engaged", "liked", "followed"):
+    for key in ("engaged", "liked", "followed", "reddit_engaged"):
         for row in state.get(key, []):
             if row.get("author_did") != author_did:
                 continue

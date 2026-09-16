@@ -72,16 +72,27 @@ jobs:
 
           MASTODON_BASE_URL: ${{ secrets.MASTODON_BASE_URL }}
           MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_REFRESH_TOKEN: ${{ secrets.REDDIT_REFRESH_TOKEN }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+
+          REDDIT_AUTO_COMMENT: "false"
+          REDDIT_COMMENT_ALLOWLIST: ""
+          MAX_REDDIT_COMMENTS_PER_RUN: "1"
+          MAX_REDDIT_COMMENTS_PER_DAY: "3"
+          MIN_REDDIT_REPLY_SCORE: "18"
         run: python -m src.main
 
       - name: Persist acquisition state
         run: |
-          if git diff --quiet -- data/state.json data/latest.json data/latest_engagement.json; then
+          if git diff --quiet -- data/state.json data/latest.json data/latest_engagement.json data/latest_reddit.json; then
             echo "No state changes."
             exit 0
           fi
           git config user.name "marginboost-organic-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/state.json data/latest.json data/latest_engagement.json
+          git add data/state.json data/latest.json data/latest_engagement.json data/latest_reddit.json
           git commit -m "chore: persist organic acquisition state"
           git push
