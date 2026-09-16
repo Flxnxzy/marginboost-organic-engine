@@ -1,6 +1,16 @@
 {
-  "engaged": [],
-  "last_run": "2026-09-16T17:43:36.907488Z",
+  "engaged": [
+    {
+      "at": "2026-09-16T17:45:40.256399Z",
+      "author_did": "did:plc:revymtt5qssww7e7avbruzic",
+      "author_handle": "myprcoza.bsky.social",
+      "candidate_id": "1169af6f04b7df0ed5e1605e",
+      "reply_uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.post/3mvnoy74k3i27",
+      "score": 20,
+      "source_uri": "at://did:plc:revymtt5qssww7e7avbruzic/app.bsky.feed.post/3mv5vabx3cz24"
+    }
+  ],
+  "last_run": "2026-09-16T17:45:41.854826Z",
   "published": [
     {
       "at": "2026-09-16T17:23:39.602319Z",

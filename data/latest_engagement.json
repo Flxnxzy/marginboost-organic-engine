@@ -1,7 +1,42 @@
 {
   "enabled": true,
-  "candidates": 0,
-  "qualified": 0,
-  "replied": 0,
-  "records": []
+  "candidates": 2,
+  "qualified": 1,
+  "replied": 1,
+  "records": [
+    {
+      "candidate_id": "1169af6f04b7df0ed5e1605e",
+      "author": "myprcoza.bsky.social",
+      "author_did": "did:plc:revymtt5qssww7e7avbruzic",
+      "source_uri": "at://did:plc:revymtt5qssww7e7avbruzic/app.bsky.feed.post/3mv5vabx3cz24",
+      "score": 20,
+      "matches": [
+        "contractor",
+        "manage",
+        "project",
+        "south africa",
+        "subcontract"
+      ],
+      "source_text": "The construction and engineering sector operates in one of the most demanding business environments in South Africa. Companies must manage large, mobile workforces across multiple project sites while balancing tight timelines, complex subcontractor ecosystems, safety compliance requirements, and…",
+      "reply_text": "Track client revenue, fulfilment cost, delivery owner and margin per job. MarginBoost is built for that workflow in SA BPO: https://marginboost.co.za?utm_source=bluesky&utm_medium=organic-reply&utm_campaign=high-intent-conversations&utm_content=1169af6f04",
+      "ok": true,
+      "result": {
+        "uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.post/3mvnoy74k3i27",
+        "cid": "bafyreigik7ifzbc2mqctpa6lwwz4arkz4gwcvgqhwgr5ccezeill4fbhza",
+        "commit": {
+          "cid": "bafyreifmgit2qo2gi5nbqe4j5s25kfumd5sf37itjpc6ivts7ztc35cyka",
+          "rev": "3mvnoy74oxq27"
+        },
+        "validationStatus": "valid"
+      }
+    }
+  ],
+  "search_stats": {
+    "queries": 18,
+    "raw_results": 187,
+    "unique_results": 140,
+    "recent_results": 3,
+    "qualified_candidates": 2,
+    "query_errors": 0
+  }
 }
