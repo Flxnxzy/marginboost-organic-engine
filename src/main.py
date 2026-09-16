@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from .content import build_post
@@ -21,6 +21,18 @@ def env_bool(name: str, default: bool = False) -> bool:
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def is_recent(published: str | None, days: int = 30) -> bool:
+    if not published:
+        return True
+    try:
+        dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt >= datetime.now(timezone.utc) - timedelta(days=days)
+    except Exception:
+        return True
 
 
 def publish_to_configured(post: str) -> list[dict]:
@@ -58,10 +70,19 @@ def main():
 
     now = utc_now()
     fresh = []
+    skipped_old = 0
+
     for item in discovered:
         if item.id in state["seen"]:
             continue
+
         state["seen"][item.id] = now
+
+        # Acquisition should react to current intent, not years-old search matches.
+        if not is_recent(item.published, days=30):
+            skipped_old += 1
+            continue
+
         scored = score_item(item.to_dict()).to_dict()
         if scored["score"] >= min_score:
             fresh.append(scored)
@@ -90,7 +111,6 @@ def main():
             pub = publish_to_configured(post)
             record["publishing"] = pub
 
-            # A post counts only if at least one configured publisher succeeded.
             if any(x.get("ok") for x in pub):
                 successful_posts += 1
                 state["published"].append({
@@ -112,6 +132,7 @@ def main():
 
     print(json.dumps({
         "discovered": len(discovered),
+        "skipped_old": skipped_old,
         "qualified_new": len(fresh),
         "queued": len(queue[:25]),
         "published": successful_posts,
