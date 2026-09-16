@@ -12,26 +12,25 @@ from .util import fingerprint, normalize_space
 PDS = "https://bsky.social"
 APPVIEW_PROXY = "did:web:api.bsky.app#bsky_appview"
 
-# Broad queries first; qualification happens after retrieval.
 SEARCH_QUERIES = [
-    "South Africa outsourcing",
-    "South African outsourcing",
+    "South Africa outsourcing clients",
+    "South African outsourcing clients",
     "South Africa BPO",
     "South African BPO",
-    "South Africa Upwork",
-    "South African Upwork",
-    "South Africa freelancer",
-    "South African freelancer",
-    "South Africa agency clients",
-    "Johannesburg freelancer",
-    "Johannesburg outsourcing",
-    "Cape Town freelancer",
-    "Cape Town outsourcing",
-    "Durban freelancer",
-    "Pretoria freelancer",
-    "outsourcing clients South Africa",
-    "subcontractor South Africa",
-    "remote clients South Africa",
+    "South Africa Upwork clients",
+    "South African Upwork clients",
+    "South Africa Fiverr clients",
+    "South African freelancer clients",
+    "South Africa freelance agency",
+    "South African freelance agency",
+    "Johannesburg Upwork",
+    "Johannesburg freelancer clients",
+    "Cape Town Upwork",
+    "Cape Town freelancer clients",
+    "Durban Upwork",
+    "Pretoria Upwork",
+    "virtual assistant South Africa clients",
+    "remote clients South Africa freelancer",
 ]
 
 ZA_TERMS = (
@@ -50,19 +49,21 @@ ZA_TERMS = (
     " rand",
 )
 
-BPO_TERMS = (
+# These are the signals that actually describe the user's target market.
+STRONG_BPO_TERMS = (
     "bpo",
     "business process outsourcing",
-    "outsourc",
-    "subcontract",
-    "white label",
-    "white-label",
-    "virtual assistant",
+    "outsourcing",
+    "outsource",
+    "outsourced",
     "upwork",
     "fiverr",
-    "freelanc",
-    "agency",
-    "remote client",
+    "freelancer",
+    "freelance",
+    "virtual assistant",
+    "va agency",
+    "white label agency",
+    "white-label agency",
 )
 
 OPERATOR_TERMS = (
@@ -70,14 +71,15 @@ OPERATOR_TERMS = (
     "clients",
     "customer",
     "customers",
-    "project",
+    "proposal",
     "delivery",
     "deliver",
+    "agency",
     "team",
     "contractor",
+    "subcontractor",
     "hire",
     "hiring",
-    "proposal",
     "margin",
     "profit",
     "pricing",
@@ -125,6 +127,25 @@ NEGATIVE_TERMS = (
     "moving to south africa",
 )
 
+# V3.2 exposed a false positive from a construction/engineering company.
+# These sectors use words like "subcontractor", "project" and "manage", but
+# they are not MarginBoost's BPO/freelance-outsourcing buyer.
+SECTOR_EXCLUSIONS = (
+    "construction",
+    "engineering",
+    "project site",
+    "project sites",
+    "mobile workforce",
+    "workforce management",
+    "safety compliance",
+    "civil engineer",
+    "civil engineering",
+    "building contractor",
+    "quantity surveyor",
+    "architecture firm",
+    "mining operation",
+)
+
 
 @dataclass
 class BlueskyCandidate:
@@ -155,31 +176,33 @@ def score_candidate(text: str) -> tuple[int, list[str]]:
 
     if any(term in t for term in NEGATIVE_TERMS):
         return 0, []
+    if any(term in t for term in SECTOR_EXCLUSIONS):
+        return 0, []
 
     za = _contains_any(t, ZA_TERMS)
-    bpo = _contains_any(t, BPO_TERMS)
+    bpo = _contains_any(t, STRONG_BPO_TERMS)
     operator = _contains_any(t, OPERATOR_TERMS)
     intent = _contains_any(t, HIGH_INTENT_TERMS)
 
-    # Must be South African and clearly about outsourcing/freelance/BPO.
-    if not za or not bpo:
-        return 0, []
-
-    # We still need evidence that this is an operator or a pain/question,
-    # but we no longer require both because that was filtering everything out.
-    if not operator and not intent:
+    # Hard target gates:
+    # - South African context
+    # - genuine BPO/freelance/outsourcing signal
+    # - evidence they operate client delivery
+    # - evidence of an operational question/pain
+    if not za or not bpo or not operator or not intent:
         return 0, []
 
     score = (
-        min(len(za), 2) * 4
-        + min(len(bpo), 3) * 4
+        min(len(za), 2) * 5
+        + min(len(bpo), 3) * 5
         + min(len(operator), 4) * 2
         + min(len(intent), 4) * 3
     )
 
     if "?" in t:
         score += 3
-    if any(p in f" {t} " for p in (" i ", " i'm ", " i've ", " my ", " we ", " we're ", " our ")):
+    padded = f" {t} "
+    if any(p in padded for p in (" i ", " i'm ", " i've ", " my ", " we ", " we're ", " our ")):
         score += 2
 
     return score, sorted(set(za + bpo + operator + intent))
@@ -217,7 +240,7 @@ def _search(query: str, token: str, limit: int) -> list[dict]:
         headers={
             "Authorization": f"Bearer {token}",
             "atproto-proxy": APPVIEW_PROXY,
-            "User-Agent": "MarginBoostOrganicEngine/3.2 (+https://marginboost.co.za)",
+            "User-Agent": "MarginBoostOrganicEngine/3.3 (+https://marginboost.co.za)",
         },
         timeout=20,
     )
@@ -258,6 +281,7 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[
 
             if not uri or not cid or not text or uri in seen:
                 continue
+
             seen.add(uri)
             stats["unique_results"] += 1
 
@@ -268,14 +292,13 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[
                 continue
 
             stats["recent_results"] += 1
+
             score, matches = score_candidate(text)
             if score <= 0:
                 continue
 
             reply = record.get("reply") or {}
             root = reply.get("root") or {}
-            root_uri = root.get("uri") or uri
-            root_cid = root.get("cid") or cid
 
             out.append(BlueskyCandidate(
                 id=fingerprint(uri, cid),
@@ -287,8 +310,8 @@ def search_candidates(own_handle: str = "", limit_per_query: int = 50) -> tuple[
                 text=text,
                 created_at=created_at,
                 indexed_at=indexed_at,
-                root_uri=root_uri,
-                root_cid=root_cid,
+                root_uri=root.get("uri") or uri,
+                root_cid=root.get("cid") or cid,
                 score=score,
                 matches=matches,
             ))

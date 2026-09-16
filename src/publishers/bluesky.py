@@ -100,3 +100,30 @@ def publish_reply(
         record["facets"] = facets
 
     return _create_record(record)
+
+def delete_post(uri: str) -> dict:
+    token, did = _session()
+    prefix = f"at://{did}/app.bsky.feed.post/"
+    if not uri.startswith(prefix):
+        raise ValueError("Refusing to delete a post that does not belong to the authenticated account")
+
+    rkey = uri[len(prefix):]
+    response = requests.post(
+        f"{BASE}/com.atproto.repo.deleteRecord",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "repo": did,
+            "collection": "app.bsky.feed.post",
+            "rkey": rkey,
+        },
+        timeout=20,
+    )
+
+    if response.ok:
+        return {"deleted": True, "uri": uri}
+
+    if response.status_code in (400, 404) and "RecordNotFound" in response.text:
+        return {"deleted": False, "already_absent": True, "uri": uri}
+
+    response.raise_for_status()
+    return {"deleted": True, "uri": uri}

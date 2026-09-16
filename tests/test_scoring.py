@@ -83,3 +83,18 @@ def test_reply_contains_full_tracked_link():
     assert "https://marginboost.co.za" in reply
     assert "utm_medium=organic-reply" in reply
     assert "utm_content=abcdefghij" in reply
+
+def test_construction_subcontractor_is_rejected():
+    score, _ = score_candidate(
+        "The construction and engineering sector in South Africa must manage multiple "
+        "project sites, subcontractor ecosystems and safety compliance requirements."
+    )
+    assert score == 0
+
+
+def test_real_sa_outsourcing_operator_is_kept():
+    score, _ = score_candidate(
+        "South African Upwork freelancer here. I outsource client delivery to contractors "
+        "and need help tracking margin and managing the workflow. What tool do you use?"
+    )
+    assert score >= 18

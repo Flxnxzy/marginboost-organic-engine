@@ -65,6 +65,29 @@ def publish_to_configured(post: str) -> list[dict]:
     return results
 
 
+def cleanup_revoked_replies(state: dict) -> dict:
+    uris = [
+        x.strip()
+        for x in os.getenv("DELETE_REPLY_URIS", "").split(",")
+        if x.strip()
+    ]
+    state.setdefault("deleted_replies", [])
+    done = set(state["deleted_replies"])
+
+    report = {"requested": len(uris), "deleted": 0, "errors": []}
+
+    for uri in uris:
+        if uri in done:
+            continue
+        try:
+            bluesky.delete_post(uri)
+            state["deleted_replies"].append(uri)
+            report["deleted"] += 1
+        except Exception as exc:
+            report["errors"].append({"uri": uri, "error": str(exc)})
+
+    return report
+
 def run_bluesky_engagement(state: dict, marginboost_url: str) -> dict:
     enabled = env_bool("ENABLE_PUBLIC_REPLIES", True)
     max_per_run = max(0, int(os.getenv("MAX_REPLIES_PER_RUN", "1")))
@@ -150,6 +173,9 @@ def main():
     state = load_state()
     prune_state(state)
 
+    # Remove any explicitly revoked/false-positive replies first.
+    cleanup = cleanup_revoked_replies(state)
+
     # Primary acquisition layer: find live high-intent Bluesky conversations
     # and reply publicly where MarginBoost is actually relevant.
     engagement = run_bluesky_engagement(state, marginboost_url)
@@ -224,6 +250,7 @@ def main():
     )
 
     print(json.dumps({
+        "cleanup": cleanup,
         "rss_discovered": len(discovered),
         "rss_skipped_old": skipped_old,
         "rss_qualified_new": len(fresh),
