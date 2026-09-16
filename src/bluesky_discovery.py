@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone, timedelta
-from typing import Any
 
 import requests
 
 from .util import fingerprint, normalize_space
 
 
-PUBLIC_API = "https://public.api.bsky.app/xrpc"
+PDS = "https://bsky.social"
+APPVIEW_PROXY = "did:web:api.bsky.app#bsky_appview"
 
 SEARCH_QUERIES = [
     '"South Africa" BPO',
@@ -147,11 +148,6 @@ def score_candidate(text: str) -> tuple[int, list[str]]:
     operator = _contains_any(t, OPERATOR_TERMS)
     intent = _contains_any(t, HIGH_INTENT_TERMS)
 
-    # Hard qualification:
-    # 1) explicitly South African context
-    # 2) BPO/freelance/outsourcing context
-    # 3) someone actually operating or asking about the workflow
-    # 4) a pain/question/operational intent signal
     if not za or not bpo or not operator or not intent:
         return 0, []
 
@@ -162,7 +158,6 @@ def score_candidate(text: str) -> tuple[int, list[str]]:
         + min(len(intent), 4) * 3
     )
 
-    # Questions and first-person operational pain deserve priority.
     if "?" in t:
         score += 3
     if any(p in t for p in (" i ", " i'm ", " i've ", " my ", " we ", " we're ", " our ")):
@@ -181,22 +176,48 @@ def _is_recent(created_at: str, hours: int = 72) -> bool:
         return False
 
 
+def _session_token() -> str:
+    handle = os.getenv("BLUESKY_HANDLE", "").strip()
+    password = os.getenv("BLUESKY_APP_PASSWORD", "").strip()
+    if not handle or not password:
+        raise RuntimeError("Bluesky credentials are not configured")
+
+    response = requests.post(
+        f"{PDS}/xrpc/com.atproto.server.createSession",
+        json={"identifier": handle, "password": password},
+        timeout=20,
+    )
+    response.raise_for_status()
+    return response.json()["accessJwt"]
+
+
+def _search(query: str, token: str, limit: int) -> list[dict]:
+    # Bluesky's docs recommend routing authenticated app.bsky.* reads
+    # through the user's PDS, which proxies to the Bluesky AppView.
+    response = requests.get(
+        f"{PDS}/xrpc/app.bsky.feed.searchPosts",
+        params={"q": query, "limit": limit, "sort": "latest"},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "atproto-proxy": APPVIEW_PROXY,
+            "User-Agent": "MarginBoostOrganicEngine/3.1 (+https://marginboost.co.za)",
+        },
+        timeout=20,
+    )
+    response.raise_for_status()
+    return response.json().get("posts", [])
+
+
 def search_candidates(own_handle: str = "", limit_per_query: int = 25) -> list[BlueskyCandidate]:
+    token = _session_token()
     seen = set()
     out: list[BlueskyCandidate] = []
 
     for query in SEARCH_QUERIES:
         try:
-            response = requests.get(
-                f"{PUBLIC_API}/app.bsky.feed.searchPosts",
-                params={"q": query, "limit": limit_per_query, "sort": "latest"},
-                headers={"User-Agent": "MarginBoostOrganicEngine/3.0 (+https://marginboost.co.za)"},
-                timeout=20,
-            )
-            response.raise_for_status()
-            posts = response.json().get("posts", [])
+            posts = _search(query, token, limit_per_query)
         except Exception as exc:
-            print(f"[warn] Bluesky search failed for {query!r}: {exc}")
+            print(f"[warn] authenticated Bluesky search failed for {query!r}: {exc}")
             continue
 
         for post in posts:
