@@ -4,7 +4,7 @@
     "likes": true,
     "follows": true
   },
-  "candidates": 1,
+  "candidates": 0,
   "reply_qualified": 0,
   "like_qualified": 0,
   "follow_qualified": 0,
@@ -18,8 +18,8 @@
     "queries": 18,
     "raw_results": 39,
     "unique_results": 31,
-    "recent_results": 2,
-    "relevant_candidates": 1,
+    "recent_results": 1,
+    "relevant_candidates": 0,
     "high_intent_candidates": 0,
     "query_errors": 0
   }
