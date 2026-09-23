@@ -13,8 +13,18 @@
       "source_uri": "at://did:plc:revymtt5qssww7e7avbruzic/app.bsky.feed.post/3mv5vabx3cz24"
     }
   ],
-  "followed": [],
-  "last_run": "2026-09-23T19:40:17.705705Z",
+  "followed": [
+    {
+      "at": "2026-09-23T22:56:32.659902Z",
+      "author_did": "did:plc:vz35eklbsdwmln3myunfrmzm",
+      "author_handle": "pressportal.co.za",
+      "candidate_id": "c996882f3963cd34e85d711c",
+      "follow_uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.graph.follow/3mw7tmjnhlu2f",
+      "relevance_score": 14,
+      "source_uri": "at://did:plc:vz35eklbsdwmln3myunfrmzm/app.bsky.feed.post/3mw6wrsu72nha"
+    }
+  ],
+  "last_run": "2026-09-23T22:56:35.107463Z",
   "liked": [
     {
       "at": "2026-09-16T19:53:52.151232Z",
@@ -44,6 +54,7 @@
     "02fd1c43531d0df7513b2189": "2026-09-20T13:02:25.868626Z",
     "03c62b1975c06180beac1aa5": "2026-09-16T17:23:39.296622Z",
     "04f4fdc0f7e40a7593034019": "2026-09-20T04:52:07.588521Z",
+    "05b74941f92f6519f7c5b3a1": "2026-09-23T22:56:35.107463Z",
     "07000d5aa92b37289ec4d499": "2026-09-16T17:23:39.296622Z",
     "076d73ae4ee842ea35b7f3e0": "2026-09-16T17:23:39.296622Z",
     "08bd16aa0b2715fceebdc40d": "2026-09-19T12:29:26.047629Z",
