@@ -24,7 +24,7 @@
       "source_uri": "at://did:plc:vz35eklbsdwmln3myunfrmzm/app.bsky.feed.post/3mw6wrsu72nha"
     }
   ],
-  "last_run": "2026-09-29T10:40:01.956747Z",
+  "last_run": "2026-09-29T18:04:41.491679Z",
   "liked": [
     {
       "at": "2026-09-16T19:53:52.151232Z",
@@ -45,6 +45,15 @@
       ],
       "score": 26,
       "source": "Reddit South Africa freelance search"
+    },
+    {
+      "at": "2026-09-29T18:04:42.146216Z",
+      "id": "62b507ade2ed2e3ccf1a8102",
+      "publishers": [
+        "bluesky"
+      ],
+      "score": 11,
+      "source": "Google News ZA BPO outsourcing"
     }
   ],
   "reddit_engaged": [],
@@ -141,6 +150,7 @@
     "5d1b747e5e7be09517213eeb": "2026-09-16T17:23:39.296622Z",
     "5ec26cb2ba98abe258a1a54f": "2026-09-16T17:23:39.296622Z",
     "5ed7c2e92035360901768223": "2026-09-16T17:23:39.296622Z",
+    "62b507ade2ed2e3ccf1a8102": "2026-09-29T18:04:41.491679Z",
     "62d919684d0a0e9982cef812": "2026-09-17T13:26:02.388916Z",
     "656ea05ad3a775b6dac1f17b": "2026-09-17T19:43:24.094791Z",
     "6587b6d50173d7c858fbb264": "2026-09-16T17:23:39.296622Z",
