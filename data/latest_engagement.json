@@ -7,44 +7,20 @@
   "candidates": 2,
   "reply_qualified": 0,
   "like_qualified": 0,
-  "follow_qualified": 1,
+  "follow_qualified": 0,
   "replied": 0,
   "liked": 0,
-  "followed": 1,
+  "followed": 0,
   "reply_records": [],
   "like_records": [],
-  "follow_records": [
-    {
-      "candidate_id": "13e06a01ab27f0b8de33652d",
-      "author": "tecakshu.bsky.social",
-      "author_did": "did:plc:tytgdn7jpdhldmihcy77c5pq",
-      "source_uri": "at://did:plc:tytgdn7jpdhldmihcy77c5pq/app.bsky.feed.post/3mwpbkflwac2j",
-      "relevance_score": 20,
-      "matches": [
-        "bpo",
-        "business process outsourcing",
-        "outsourcing",
-        "south africa"
-      ],
-      "ok": true,
-      "result": {
-        "uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.graph.follow/3mwpmg4hct626",
-        "cid": "bafyreifh3s7zv6vbnm3x5il3ufkz2serp4akkcxm27cizfrlq7uewecsbe",
-        "commit": {
-          "cid": "bafyreiemi6uln2xgmuevectpb7nwnzt7xwb6rdnfqigfluqdc6rlo5j5iy",
-          "rev": "3mwpmg4hioo26"
-        },
-        "validationStatus": "valid"
-      }
-    }
-  ],
+  "follow_records": [],
   "search_stats": {
     "queries": 18,
-    "raw_results": 42,
-    "unique_results": 34,
+    "raw_results": 41,
+    "unique_results": 33,
     "recent_results": 2,
     "relevant_candidates": 2,
     "high_intent_candidates": 0,
-    "query_errors": 0
+    "query_errors": 1
   }
 }
