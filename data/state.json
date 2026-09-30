@@ -22,9 +22,18 @@
       "follow_uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.graph.follow/3mw7tmjnhlu2f",
       "relevance_score": 14,
       "source_uri": "at://did:plc:vz35eklbsdwmln3myunfrmzm/app.bsky.feed.post/3mw6wrsu72nha"
+    },
+    {
+      "at": "2026-09-30T05:30:17.141278Z",
+      "author_did": "did:plc:tytgdn7jpdhldmihcy77c5pq",
+      "author_handle": "tecakshu.bsky.social",
+      "candidate_id": "13e06a01ab27f0b8de33652d",
+      "follow_uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.graph.follow/3mwpmg4hct626",
+      "relevance_score": 20,
+      "source_uri": "at://did:plc:tytgdn7jpdhldmihcy77c5pq/app.bsky.feed.post/3mwpbkflwac2j"
     }
   ],
-  "last_run": "2026-09-29T23:42:09.966439Z",
+  "last_run": "2026-09-30T05:30:19.339008Z",
   "liked": [
     {
       "at": "2026-09-16T19:53:52.151232Z",
