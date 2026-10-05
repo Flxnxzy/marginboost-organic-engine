@@ -33,7 +33,7 @@
       "source_uri": "at://did:plc:tytgdn7jpdhldmihcy77c5pq/app.bsky.feed.post/3mwpbkflwac2j"
     }
   ],
-  "last_run": "2026-10-04T23:07:54.035663Z",
+  "last_run": "2026-10-05T05:36:07.859883Z",
   "liked": [
     {
       "at": "2026-09-16T19:53:52.151232Z",
@@ -62,6 +62,15 @@
         "bluesky"
       ],
       "score": 11,
+      "source": "Google News ZA BPO outsourcing"
+    },
+    {
+      "at": "2026-10-05T05:36:08.301992Z",
+      "id": "bfcb6e9d3ddc8803137c7970",
+      "publishers": [
+        "bluesky"
+      ],
+      "score": 13,
       "source": "Google News ZA BPO outsourcing"
     }
   ],
@@ -245,9 +254,11 @@
     "baf20ffcc0a99b81b6e13ac6": "2026-09-19T22:19:24.301003Z",
     "bbc0bd5d75ee2244fed73acf": "2026-09-26T13:04:00.680711Z",
     "bf2c2e816bae5f9488b47095": "2026-09-16T17:23:39.296622Z",
+    "bfcb6e9d3ddc8803137c7970": "2026-10-05T05:36:07.859883Z",
     "c1172dcee2fdfa4a77c4fe92": "2026-09-17T19:43:24.094791Z",
     "c18f39389a0db7ded15b42f6": "2026-09-18T12:57:45.474756Z",
     "c1ab1c6db4c1d401cf2add8f": "2026-09-26T13:04:00.680711Z",
+    "c68e91c3926a59ea7be614c3": "2026-10-05T05:36:07.859883Z",
     "c7de647de15de93e5e214c1c": "2026-09-16T17:23:39.296622Z",
     "c8538915ec5474358b0e5e19": "2026-09-16T17:23:39.296622Z",
     "c8f9d35aff578c660791eaa7": "2026-09-16T17:28:20.499507Z",
