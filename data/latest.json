@@ -1,1 +1,28 @@
-[]
+[
+  {
+    "id": "f477b33ddc7a301c31baacdb",
+    "source": "Google News ZA BPO outsourcing",
+    "source_url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxQeWN1aDlhUzRYdjZNVlNIZ2YyTHMxMHJjMnpXRFdkMHhPbi1Cb3pFd3RBVUstclo3X2VfZG9HMXJvM3ZaR01KZ01pTmpBWEgyTENfbm4taV9CMFJOcEthWk42ZG1uNXg2QW5CUHJuU3NTYTNldWdERVZ3ODJoRXRXN3lvYmZPN3Mzc0dEYVpGREo5M1JIVkc5RGxqcTNxbWF6T3VHQnVWVGJmeEE2Sk41MUo4MUlfSktCQVdVdjVHMG85QTZuZlUzbGJsXzN1QQ?oc=5",
+    "score": 8,
+    "matches": [
+      "outsourcing",
+      "zar"
+    ],
+    "post": "Running outsourced client work? Track client revenue, fulfilment cost and margin before you scale. Built for South African BPO operators: https://marginboost.co.za?utm_source=bluesky&utm_medium=organic&utm_campaign=organic-engine",
+    "publishing": [
+      {
+        "publisher": "bluesky",
+        "ok": true,
+        "result": {
+          "uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.post/3mz6j3sek3y2d",
+          "cid": "bafyreieeon773esqccawg4dlanmhfwbymb3ztv3jrw4ayfcxg6ggmr7oam",
+          "commit": {
+            "cid": "bafyreihnqfert2d2wmskdopvckqcvogalgm72awga22k7uvry4jd7h74lu",
+            "rev": "3mz6j3seoya2d"
+          },
+          "validationStatus": "valid"
+        }
+      }
+    ]
+  }
+]
