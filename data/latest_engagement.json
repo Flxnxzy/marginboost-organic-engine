@@ -16,11 +16,11 @@
   "follow_records": [],
   "search_stats": {
     "queries": 18,
-    "raw_results": 46,
-    "unique_results": 38,
+    "raw_results": 44,
+    "unique_results": 37,
     "recent_results": 0,
     "relevant_candidates": 0,
     "high_intent_candidates": 0,
-    "query_errors": 0
+    "query_errors": 1
   }
 }
