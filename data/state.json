@@ -11,6 +11,16 @@
       "reply_uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.post/3mvnoy74k3i27",
       "score": 20,
       "source_uri": "at://did:plc:revymtt5qssww7e7avbruzic/app.bsky.feed.post/3mv5vabx3cz24"
+    },
+    {
+      "at": "2026-11-05T12:17:43.078327Z",
+      "author_did": "did:plc:g5zaf4gbxugkm4jg7gok3tj2",
+      "author_handle": "hiringlat.bsky.social",
+      "candidate_id": "c00ef2438bd01c4805441726",
+      "relevance_score": 16,
+      "reply_uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.post/3mzktxsjw4f2y",
+      "score": 19,
+      "source_uri": "at://did:plc:g5zaf4gbxugkm4jg7gok3tj2/app.bsky.feed.post/3mzjwigfuxq2f"
     }
   ],
   "followed": [
@@ -33,7 +43,7 @@
       "source_uri": "at://did:plc:tytgdn7jpdhldmihcy77c5pq/app.bsky.feed.post/3mwpbkflwac2j"
     }
   ],
-  "last_run": "2026-11-05T00:52:48.286514Z",
+  "last_run": "2026-11-05T12:17:44.723303Z",
   "liked": [
     {
       "at": "2026-09-16T19:53:52.151232Z",
@@ -249,6 +259,7 @@
     "9b33e6984df0bbcdcad70c52": "2026-09-21T15:05:40.643653Z",
     "9c6e2866050e5f7716c4a6ec": "2026-11-01T05:59:00.932473Z",
     "9d7ce817ba6c4233aca10919": "2026-10-31T19:57:37.142225Z",
+    "9f2577cdf271e82c1c30d935": "2026-11-05T12:17:44.723303Z",
     "a05db47184b019077286ae7c": "2026-09-21T20:25:15.935953Z",
     "a06b8aaa65c7a0a0d26a9ecd": "2026-09-26T13:04:00.680711Z",
     "a243cafa7b8bdbd55e33b658": "2026-09-29T10:40:01.956747Z",
