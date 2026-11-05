@@ -5,41 +5,13 @@
     "follows": true
   },
   "candidates": 1,
-  "reply_qualified": 1,
+  "reply_qualified": 0,
   "like_qualified": 0,
   "follow_qualified": 0,
-  "replied": 1,
+  "replied": 0,
   "liked": 0,
   "followed": 0,
-  "reply_records": [
-    {
-      "candidate_id": "c00ef2438bd01c4805441726",
-      "author": "hiringlat.bsky.social",
-      "author_did": "did:plc:g5zaf4gbxugkm4jg7gok3tj2",
-      "source_uri": "at://did:plc:g5zaf4gbxugkm4jg7gok3tj2/app.bsky.feed.post/3mzjwigfuxq2f",
-      "score": 19,
-      "relevance_score": 16,
-      "matches": [
-        "bpo",
-        "hire",
-        "hiring",
-        "manage",
-        "south africa"
-      ],
-      "source_text": "Growth Marketing Manager - BPO — hirehangar USD 3k–3k/mo South Africa · Colombia · Chile · Peru · Philippines · Argentina · Ethiopia · Panama · Mexico https://hiring.lat/job/growth-marketing-manager-bpo-hirehangar/413696 #communicationskills #collaboration #leadership",
-      "reply_text": "Track client revenue, fulfilment cost, delivery owner and margin per job. MarginBoost is built for that workflow in SA BPO: https://marginboost.co.za?utm_source=bluesky&utm_medium=organic-reply&utm_campaign=high-intent-conversations&utm_content=c00ef2438b",
-      "ok": true,
-      "result": {
-        "uri": "at://did:plc:fem7iqbne4adhmix4d7vjwwk/app.bsky.feed.post/3mzktxsjw4f2y",
-        "cid": "bafyreihdplmcjamw537xtjdw2fyktspywqpofh6qfpyez3pxhuk3iami4u",
-        "commit": {
-          "cid": "bafyreiczq7aotemkbaabpvwjwaatde5byusdq53qvpog5hdcwkyzazmure",
-          "rev": "3mzktxsk3xv2y"
-        },
-        "validationStatus": "valid"
-      }
-    }
-  ],
+  "reply_records": [],
   "like_records": [],
   "follow_records": [],
   "search_stats": {
