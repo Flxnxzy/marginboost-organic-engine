@@ -16,9 +16,9 @@
   "follow_records": [],
   "search_stats": {
     "queries": 18,
-    "raw_results": 49,
-    "unique_results": 41,
-    "recent_results": 0,
+    "raw_results": 50,
+    "unique_results": 42,
+    "recent_results": 1,
     "relevant_candidates": 0,
     "high_intent_candidates": 0,
     "query_errors": 0
